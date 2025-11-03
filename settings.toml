@@ -1,0 +1,11 @@
+# settings.toml
+[default]
+app_url = "http://localhost:4200/"
+headless = false
+browser = "chrome"
+
+[test]
+app_url = "http://test/"
+
+[prod]
+app_url = "http://prod"
