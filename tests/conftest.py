@@ -4,10 +4,13 @@ import re
 
 import pytest
 import json
-from playwright.async_api import async_playwright, BrowserContext
+
+import pytest_asyncio
+from playwright.async_api import async_playwright, BrowserContext, Page
 from pytest_html import extras
 
 from tests.src.config import config
+from tests.src.utils.page_utils import PageContainer
 
 PROJECT_ROOT = pathlib.Path(__file__).parent.resolve()
 TRACES_DIR = PROJECT_ROOT / "test-results"
@@ -60,7 +63,7 @@ async def tear_down_user_fixture(context, browser):
     await browser.close()
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def user1_context():
     async with async_playwright() as pw:
         browser = await start_browser(pw)
@@ -69,7 +72,7 @@ async def user1_context():
         await tear_down_user_fixture(context, browser)
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def user2_context():
     async with async_playwright() as pw:
         browser = await start_browser(pw)
@@ -79,18 +82,20 @@ async def user2_context():
 
 
 @pytest.fixture
-async def user1_page(user1_context: BrowserContext, request):
+async def user1(user1_context: BrowserContext, request):
     page = await user1_context.new_page()
     await start_tracing(page)
-    yield page
+    page_container = PageContainer(page)
+    yield page_container
     await tear_down_user_page_fixture(page, request)
 
 
 @pytest.fixture
-async def user2_page(user2_context: BrowserContext, request):
+async def user2(user2_context: BrowserContext, request):
     page = await user2_context.new_page()
     await start_tracing(page)
-    yield page
+    page_container = PageContainer(page)
+    yield page_container
     await tear_down_user_page_fixture(page, request)
 
 
