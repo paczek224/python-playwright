@@ -1,13 +1,12 @@
+import json
 import os
 import pathlib
 import re
 
 import pytest
-import json
-
-import pytest_asyncio
-from playwright.async_api import async_playwright, BrowserContext, Page
+from playwright.async_api import async_playwright
 from pytest_html import extras
+from xdist.scheduler import LoadScopeScheduling
 
 from tests.src.config import config
 from tests.src.utils.page_utils import PageContainer
@@ -63,40 +62,43 @@ async def tear_down_user_fixture(context, browser):
     await browser.close()
 
 
-@pytest_asyncio.fixture
-async def user1_context():
+@pytest.fixture(scope="function")
+async def user1(request):
     async with async_playwright() as pw:
         browser = await start_browser(pw)
         context = await start_context(browser, "user1_state.json")
-        yield context
+        page = await context.new_page()
+        await start_tracing(page)
+        page_container = PageContainer(page)
+        yield page_container
+        await tear_down_user_page_fixture(page, request)
         await tear_down_user_fixture(context, browser)
 
 
-@pytest_asyncio.fixture
-async def user2_context():
+@pytest.fixture(scope="function")
+async def user2(request):
     async with async_playwright() as pw:
         browser = await start_browser(pw)
         context = await start_context(browser, "user2_state.json")
-        yield context
+        page = await context.new_page()
+        await start_tracing(page)
+        page_container = PageContainer(page)
+        yield page_container
+        await tear_down_user_page_fixture(page, request)
         await tear_down_user_fixture(context, browser)
 
 
-@pytest.fixture
-async def user1(user1_context: BrowserContext, request):
-    page = await user1_context.new_page()
-    await start_tracing(page)
-    page_container = PageContainer(page)
-    yield page_container
-    await tear_down_user_page_fixture(page, request)
-
-
-@pytest.fixture
-async def user2(user2_context: BrowserContext, request):
-    page = await user2_context.new_page()
-    await start_tracing(page)
-    page_container = PageContainer(page)
-    yield page_container
-    await tear_down_user_page_fixture(page, request)
+@pytest.fixture(scope="function")
+async def user3(request):
+    async with async_playwright() as pw:
+        browser = await start_browser(pw)
+        context = await start_context(browser, "user3_state.json")
+        page = await context.new_page()
+        await start_tracing(page)
+        page_container = PageContainer(page)
+        yield page_container
+        await tear_down_user_page_fixture(page, request)
+        await tear_down_user_fixture(context, browser)
 
 
 @pytest.hookimpl(hookwrapper=True)
@@ -110,3 +112,23 @@ def pytest_runtest_makereport(item, call):
         if not hasattr(rep, "extra"):
             rep.extra = []
         rep.extra.append(extras.url(os.path.relpath(trace, PROJECT_ROOT), name=f"playwright show-trace {trace}"))
+
+
+class PerUserScheduler(LoadScopeScheduling):
+    def _split_scope(self, nodeid):
+        parts = nodeid.split("::")
+        if len(parts) > 2 and parts[0] == "user":
+            return "::".join(parts[:2])
+        return super()._split_scope(nodeid)
+
+
+def pytest_xdist_make_scheduler(config, log):
+    return PerUserScheduler(config, log)
+
+
+def pytest_collection_modifyitems(config, items):
+    for item in items:
+        user_marker = item.get_closest_marker("user")
+        if user_marker:
+            user_id = user_marker.args[0]
+            item._nodeid = f"user::{user_id}::{item.nodeid}"

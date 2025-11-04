@@ -5,7 +5,8 @@ from tests.src.utils.page_utils import PageContainer
 
 
 @pytest.mark.asyncio()
-async def test_foo1(user1):
+@pytest.mark.user("user1")
+async def test_foo1(user1: PageContainer):
     await user1.dashboard.go_to()
     await user1.dashboard.search_box.fill("Luke")
     await user1.dashboard.search_button.click()
@@ -13,6 +14,7 @@ async def test_foo1(user1):
 
 
 @pytest.mark.asyncio
+@pytest.mark.user("user1")
 async def test_foo2(user1: PageContainer):
     await user1.dashboard.go_to()
     await user1.dashboard.search_box.fill("Luke")

@@ -7,7 +7,7 @@
 /tests/test-results/
 /tests/context/state/*.json*
 
-report.html
+TestReport.html
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
