@@ -4,5 +4,5 @@ From [app](app) directory:
 - Run `npm start` to start the dev server.
 
 ### Run Tests
-From root directory:
-- Run `pytest`
+From [tests](system_tests) directory:
+- Run `pytest -n 3`

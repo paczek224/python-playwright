@@ -3,6 +3,7 @@
 app_url = "http://localhost:4200/"
 headless = false
 browser = "chrome"
+api_host = "https://swapi.tech/api"
 
 [test]
 app_url = "http://test/"

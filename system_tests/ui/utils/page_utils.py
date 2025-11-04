@@ -1,6 +1,6 @@
 from playwright.async_api import Page
 
-from tests.src.pages.dashboard_page import DashBoardPage
+from system_tests.ui.pages.dashboard_page import DashBoardPage
 
 
 class PageContainer:

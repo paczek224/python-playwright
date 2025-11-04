@@ -1,7 +1,7 @@
 from playwright.async_api import Page
 
-from tests.src.config import config
-from tests.src.pages.abstract_page import BasePage
+from system_tests.config import config
+from system_tests.ui.pages.abstract_page import BasePage
 
 
 class DashBoardPage(BasePage):
